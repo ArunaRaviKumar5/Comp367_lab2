@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import java.time.LocalTime;
 @SpringBootApplication
 public class Comp367Lab2Application {
 
@@ -16,7 +16,16 @@ public class Comp367Lab2Application {
     class HelloWorldController {
         @GetMapping("/")
         public String hello() {
-            return "Welcome to Comp367!";
+        	LocalTime currentTime = LocalTime.now();
+            String greeting;
+            
+            if (currentTime.isBefore(LocalTime.NOON)) {
+                greeting = "Good morning, Aruna, Welcome to COMP367";
+            } else {
+                greeting = "Good afternoon, Aruna, Welcome to COMP367";
+            }
+
+            return greeting;
         }
     }
 }
