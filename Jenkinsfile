@@ -1,38 +1,39 @@
 pipeline {
     agent any
-
     tools {
-        // Install the Maven version configured as "M3" and add it to the path.
         maven "MAVEN3"
     }
-
+    environment {
+        DOCKERHUB_PWD = credentials("Credential_dockerHubPWD")
+    }
     stages {
-        stage('check out')
-        { 
-            steps{
-            checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/ArunaRaviKumar5/Comp367_lab2.git']])
-        
-            }
-            }
-        stage('Build') {
+        stage("Build Maven") {
             steps {
-                // Get some code from a GitHub repository
-               // git 'https://github.com/jglick/simple-maven-project-with-tests.git'
-               //   git branch: 'main', url: 'https://github.com/ArunaRaviKumar5/spring-petclinic.git'
-                // Run Maven on a Unix agent.
-              //  sh "mvn -Dmaven.test.failure.ignore=true clean package"
-
-                // To run Maven on a Windows agent, use
-                bat "mvn -Dmaven.test.failure.ignore=true clean package"
+                checkout scmGit(
+                    branches: [[name: '*/main']],
+                    extensions: [],
+                    userRemoteConfigs: [[url: 'https://github.com/ArunaRaviKumar5/Comp367_lab2']]
+                )
+                bat 'mvn clean install'
             }
-
-            post {
-                // If Maven was able to run the tests, even if some of the test
-                // failed, record the test results and archive the jar file.
-                success {
-                    junit '**/target/surefire-reports/TEST-*.xml'
-                    archiveArtifacts 'target/*.jar'
+        }
+        stage("Build Docker image") {
+            steps {
+                bat 'docker build -t devops/spring-devops .'
+            }
+        }
+        stage("Push Docker image") {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'Credential_dockerHubPWD', variable: 'dockerhubpwd')]) {
+                        bat '''
+                            docker login -u arunaravikumar5 -p %dockerhubpwd% 
+                        '''
+                    }
+                    bat 'docker push devops/spring-devops'
                 }
+            //   bat 'docker tag devops/spring-devops devops/spring-devops'
+            //     bat 'docker push devops/spring-devops'
             }
         }
     }
